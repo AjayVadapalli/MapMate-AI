@@ -1,12 +1,12 @@
 # Multi-stage build for optimal image size and security
-FROM node:18-alpine AS frontend-builder
+FROM node:18-slim AS frontend-builder
 
 # Set working directory for frontend build
 WORKDIR /app/adk-ui
 
 # Copy package files and install dependencies
 COPY adk-ui/package*.json ./
-RUN npm install
+RUN npm ci
 
 # Copy frontend source and build
 COPY adk-ui/ ./
@@ -20,7 +20,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PORT=8080
+    PORT=10000 \
+    ADK_SERVER_URL=http://127.0.0.1:8000
 
 # Install system dependencies including Node.js for ADK web command
 RUN apt-get update && apt-get install -y \
@@ -57,12 +58,11 @@ RUN chmod +x docker-entrypoint.sh
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# Expose port
-EXPOSE 8080
+# Render routes public traffic to the Next.js frontend on PORT. ADK stays on loopback.
+EXPOSE 10000
 
-# Health check - check if ADK web server is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+    CMD curl -f http://localhost:${PORT:-10000}/api/adk/health || exit 1
 
 # Start the application
 ENTRYPOINT ["./docker-entrypoint.sh"]

@@ -79,28 +79,18 @@ The frontend sends chat requests to the local ADK backend. The agent uses Places
 
 ## Deploy on Render
 
-Deploy this app as two services in the same Render region:
+For a zero-cost hobby deployment, run the frontend and ADK backend together in one **Free Web Service**. The Docker image starts ADK on `127.0.0.1:8000` (internal only) and Next.js on Render's public `$PORT`.
 
-### ADK backend (Private Service)
+1. In Render, choose **New → Web Service** and connect this repository on the `main` branch.
+2. Select **Docker**. Leave **Root Directory** blank so Render uses the root `Dockerfile`.
+3. Select the **Free** instance type. Do not create a Private Service.
+4. Add these environment variables in the service's Environment settings:
 
-Create a **Private Service** from this repository with the project root as its root directory:
+   - `GOOGLE_API_KEY` — Gemini API key
+   - `GOOGLE_MAPS_API_KEY` — Google Maps API key with Places API (New) and Routes API enabled
+   - `GOOGLE_ADK_MODEL` — `gemini-3.5-flash-lite`
 
-- Build command: `pip install -r requirements.txt`
-- Start command: `adk web --host 0.0.0.0 --port 8000`
-- Environment variables: `GOOGLE_API_KEY`, `GOOGLE_MAPS_API_KEY`, and `GOOGLE_ADK_MODEL`
+5. Create the Web Service. Render builds the Dockerfile and supplies the frontend port automatically.
 
-Copy the backend's internal address from its Render **Connect** panel.
-
-### Frontend (Web Service)
-
-Create a **Web Service** from the same repository:
-
-- Root directory: `adk-ui`
-- Build command: `npm ci && npm run build`
-- Start command: `npm run start -- --hostname 0.0.0.0 --port $PORT`
-- Environment variable: `ADK_SERVER_URL`, set to the backend's internal address, including `http://` and port `8000`
-
-Keep both services in the same region so the frontend can reach the private backend. Put API keys only in the backend service's Environment settings. Do not expose the ADK backend publicly without authentication.
-
-Render docs: [Deploy a Next.js app](https://render.com/docs/deploy-nextjs-app), [Private services](https://render.com/docs/private-services), and [Environment variables](https://render.com/docs/configure-environment-variables).
+The free instance sleeps after inactivity and can take about a minute to wake up. Its 512 MB memory and ephemeral filesystem can limit reliability for this combined service; use it for a demo or light use. Chat sessions may reset after restarts. Render hosting is free, but Gemini and Google Maps API usage may incur separate charges. See [Render's free instance limits](https://render.com/docs/free) and [Docker deployment docs](https://render.com/docs/docker).
 

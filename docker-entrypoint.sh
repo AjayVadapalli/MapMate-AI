@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Docker entrypoint script for MapMate AI
-# This script starts both the ADK backend and serves the built frontend
+# Starts ADK on loopback and Next.js on Render's public port.
 
 set -e
 
@@ -16,42 +16,40 @@ if [ -z "$GOOGLE_MAPS_API_KEY" ]; then
 fi
 
 # Set default port if not specified
-export PORT=${PORT:-8080}
+export PORT=${PORT:-10000}
+export ADK_SERVER_URL=${ADK_SERVER_URL:-http://127.0.0.1:8000}
 
-echo "📡 Port: $PORT"
+echo "📡 Frontend port: $PORT"
 echo "🗺️  Google Maps API key is configured."
 
 # Change to the app directory
 cd /app
 
-# Start the ADK web server in the background
-echo "🔧 Starting ADK web server..."
-adk web --port=$PORT --host=0.0.0.0 &
+# Start ADK on loopback so it is reachable only inside this container.
+echo "🔧 Starting ADK web server on 127.0.0.1:8000..."
+adk web --port=8000 --host=127.0.0.1 &
 ADK_PID=$!
+
+cd /app/adk-ui
+echo "🌐 Starting Next.js frontend..."
+npm run start -- --hostname 0.0.0.0 --port "$PORT" &
+FRONTEND_PID=$!
 
 # Function to handle shutdown gracefully
 shutdown() {
     echo "🛑 Shutting down gracefully..."
-    kill $ADK_PID 2>/dev/null || true
+    kill "$ADK_PID" "$FRONTEND_PID" 2>/dev/null || true
     exit 0
 }
 
 # Trap signals for graceful shutdown
-trap shutdown SIGTERM SIGINT
+trap 'kill "$ADK_PID" "$FRONTEND_PID" 2>/dev/null || true; exit 0' SIGTERM SIGINT
 
-# Wait for ADK server to start
-echo "⏳ Waiting for ADK server to start..."
-sleep 5
-
-# Check if ADK server is running
-if ! ps -p $ADK_PID > /dev/null; then
-    echo "❌ ADK server failed to start!"
-    exit 1
-fi
-
-echo "✅ ADK server started successfully (PID: $ADK_PID)"
-echo "🌐 Application available at http://localhost:$PORT"
-echo "📖 API documentation at http://localhost:$PORT/docs"
-
-# Keep the container running and wait for the ADK process
-wait $ADK_PID
+echo "✅ MapMate AI is starting on port $PORT"
+# Keep the container alive while both services run; exit if either process stops.
+set +e
+wait -n "$ADK_PID" "$FRONTEND_PID"
+STATUS=$?
+kill "$ADK_PID" "$FRONTEND_PID" 2>/dev/null || true
+wait 2>/dev/null
+exit "$STATUS"
