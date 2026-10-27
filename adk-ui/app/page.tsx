@@ -118,7 +118,8 @@ export default function Home() {
   const getLocationContext = async (messageText: string): Promise<string> => {
     const asksForNearby = /\b(nearby|near me|around me|closest|nearest|near my location)\b/i.test(messageText);
     const startsFromHere = /\b(from here|from me|from my location|current location)\b/i.test(messageText);
-    if ((!asksForNearby && !startsFromHere) || !navigator.geolocation) return '';
+    const asksForCurrentLocation = /\b(where am i|what is my location|what's my location|tell me my location|show me my location|my current location)\b/i.test(messageText);
+    if ((!asksForNearby && !startsFromHere && !asksForCurrentLocation) || !navigator.geolocation) return '';
 
     try {
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
