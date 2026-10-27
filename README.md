@@ -77,3 +77,30 @@ Browser → Next.js chat and API routes → Google ADK agent → Gemini and Goog
 
 The frontend sends chat requests to the local ADK backend. The agent uses Places API for location searches and Routes API for route calculations.
 
+## Deploy on Render
+
+Deploy this app as two services in the same Render region:
+
+### ADK backend (Private Service)
+
+Create a **Private Service** from this repository with the project root as its root directory:
+
+- Build command: `pip install -r requirements.txt`
+- Start command: `adk web --host 0.0.0.0 --port 8000`
+- Environment variables: `GOOGLE_API_KEY`, `GOOGLE_MAPS_API_KEY`, and `GOOGLE_ADK_MODEL`
+
+Copy the backend's internal address from its Render **Connect** panel.
+
+### Frontend (Web Service)
+
+Create a **Web Service** from the same repository:
+
+- Root directory: `adk-ui`
+- Build command: `npm ci && npm run build`
+- Start command: `npm run start -- --hostname 0.0.0.0 --port $PORT`
+- Environment variable: `ADK_SERVER_URL`, set to the backend's internal address, including `http://` and port `8000`
+
+Keep both services in the same region so the frontend can reach the private backend. Put API keys only in the backend service's Environment settings. Do not expose the ADK backend publicly without authentication.
+
+Render docs: [Deploy a Next.js app](https://render.com/docs/deploy-nextjs-app), [Private services](https://render.com/docs/private-services), and [Environment variables](https://render.com/docs/configure-environment-variables).
+

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const adkServerUrl = (process.env.ADK_SERVER_URL || 'http://localhost:8000').replace(/\/+$/, '');
     
     // Convert from UI format to ADK API format (camelCase to snake_case)
     const adkRequest = {
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     // First, ensure session exists
     try {
-      await fetch(`http://localhost:8000/apps/${body.appName}/users/${body.userId}/sessions/${body.sessionId}`, {
+      await fetch(`${adkServerUrl}/apps/${body.appName}/users/${body.userId}/sessions/${body.sessionId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Forward the request to the ADK server with correct format
-    const response = await fetch('http://localhost:8000/run', {
+    const response = await fetch(`${adkServerUrl}/run`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     console.error('Proxy error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: `Could not reach the ADK server at http://localhost:8000: ${errorMessage}` },
+      { error: `Could not reach the ADK server at ${process.env.ADK_SERVER_URL || 'http://localhost:8000'}: ${errorMessage}` },
       {
         status: 502,
         headers: {

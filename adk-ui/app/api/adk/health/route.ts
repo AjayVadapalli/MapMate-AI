@@ -4,8 +4,9 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const adkServerUrl = (process.env.ADK_SERVER_URL || 'http://localhost:8000').replace(/\/+$/, '');
     // Test connectivity to ADK server using /list-apps endpoint
-    const response = await fetch('http://localhost:8000/list-apps', {
+    const response = await fetch(`${adkServerUrl}/list-apps`, {
       method: 'GET',
       cache: 'no-store',
     });
@@ -36,7 +37,7 @@ export async function GET() {
       { 
         status: 'disconnected', 
         error: 'Cannot reach ADK server',
-        message: `ADK server is not reachable on localhost:8000: ${errorMessage}`
+        message: `ADK server is not reachable at ${process.env.ADK_SERVER_URL || 'http://localhost:8000'}: ${errorMessage}`
       },
       { 
         status: 500,
