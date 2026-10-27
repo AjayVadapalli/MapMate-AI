@@ -24,6 +24,43 @@ A conversational maps assistant for finding places and getting practical route d
 
 The keys are used by the backend. Keep them out of frontend code and source control.
 
+## Get and configure API keys
+
+This project uses **Gemini** and Google Maps Platform. The current backend directly calls **Places API (New)** and **Routes API**. The setup below also enables **Geocoding API** and **Maps JavaScript API** for Maps features and future extensions.
+
+### Gemini API key
+
+1. Open [Google AI Studio API keys](https://aistudio.google.com/app/apikey) and sign in.
+2. Create or select a Google Cloud project, then create an API key for Gemini.
+3. Keep the key private. Set it as `GOOGLE_API_KEY` in your local environment or your Render service's Environment settings.
+
+See Google's [Gemini API key guide](https://ai.google.dev/gemini-api/docs/api-key) for current key management details.
+
+### Google Maps Platform key
+
+1. Open the [Google Cloud Console](https://console.cloud.google.com/) and select or create a project.
+2. Attach a billing account to the project. Maps Platform APIs require billing to be enabled; API use may incur charges.
+3. In **APIs & Services → Library**, enable all four APIs:
+   - **Geocoding API** — converts addresses to coordinates or coordinates to addresses.
+   - **Maps JavaScript API** — loads interactive Google maps in a browser.
+   - **Places API (New)** — place and nearby searches.
+   - **Routes API** — route distances, durations, and directions.
+4. In **APIs & Services → Credentials**, choose **Create credentials → API key**.
+5. Restrict the key under **API restrictions** to **Geocoding API**, **Maps JavaScript API**, **Places API (New)**, and **Routes API**, then save it. This key is used by the server-side backend; do not put it in frontend code or name it with a `NEXT_PUBLIC_` prefix. If you later use Maps JavaScript API directly in the browser, create a separate browser key with website (HTTP referrer) restrictions.
+6. Set it as `GOOGLE_MAPS_API_KEY` in `google_map_adk/.env` locally or in your Render service's Environment settings.
+
+Google's setup guides: [Places API (New)](https://developers.google.com/maps/documentation/places/web-service/get-api-key), [Routes API](https://developers.google.com/maps/documentation/routes/get-api-key), and [API key security](https://developers.google.com/maps/api-security-best-practices).
+
+### Other optional API
+
+The following API is not currently used by this project. If you add code that calls it, enable it in **APIs & Services → Library** and add it to the key's API restrictions:
+
+- **Distance Matrix API** (Legacy) — calculates distances and travel times between multiple origins and destinations. This app currently uses Routes API instead. See [Distance Matrix key setup](https://developers.google.com/maps/documentation/distance-matrix/get-api-key).
+
+Setup guides: [Geocoding API](https://developers.google.com/maps/documentation/geocoding/get-api-key), [Maps JavaScript API](https://developers.google.com/maps/documentation/javascript/get-api-key), [Places API (New)](https://developers.google.com/maps/documentation/places/web-service/get-api-key), and [Routes API](https://developers.google.com/maps/documentation/routes/get-api-key).
+
+Restrict keys to the APIs and applications that actually use them, monitor usage, and set quotas or budget alerts in Google Cloud. Google recommends keeping server-side web-service keys secret; website referrer restrictions are for browser-based keys, not this backend key.
+
 ## Local setup
 
 ### 1. Configure the backend keys
